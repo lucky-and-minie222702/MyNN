@@ -11,7 +11,7 @@ class Sigmoid(Opt):
         return F.sigmoid(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.sigmoid_derivative(self.inp)
+        grad = F.sigmoid_derivative(self.input)
         return output_grad * grad
     
 
@@ -23,7 +23,7 @@ class Tanh(Opt):
         return F.tanh(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.sigmoid_derivative(self.inp)
+        grad = F.sigmoid_derivative(self.input)
         return output_grad * grad
     
     
@@ -35,7 +35,7 @@ class ReLU(Opt):
         return F.relu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.relu_derivative(self.inp)
+        grad = F.relu_derivative(self.input)
         return output_grad * grad
     
 
@@ -48,7 +48,7 @@ class LeakyReLU(Opt):
         return F.leaky_relu(inp, self.alpha)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.leaky_relu_derivative(self.inp, self.alpha)
+        grad = F.leaky_relu_derivative(self.input, self.alpha)
         return output_grad * grad
     
     
@@ -60,7 +60,7 @@ class SiLU(Opt):
         return F.silu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.silu_derivative(self.inp)
+        grad = F.silu_derivative(self.input)
         return output_grad * grad
     
     
@@ -72,7 +72,7 @@ class GeLU(Opt):
         return F.gelu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.gelu_derivative(self.inp)
+        grad = F.gelu_derivative(self.input)
         return output_grad * grad
     
     
@@ -84,7 +84,7 @@ class SeLU(Opt):
         return F.selu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.selu_derivative(self.inp)
+        grad = F.selu_derivative(self.input)
         return output_grad * grad
     
     
@@ -96,7 +96,7 @@ class CeLU(Opt):
         return F.celu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.celu_derivative(self.inp)
+        grad = F.celu_derivative(self.input)
         return output_grad * grad
 
 
@@ -109,9 +109,9 @@ class Softmax(Opt):
         return F.softmax(inp, self.axis)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.softmax_derivative(self.inp, self.axis)
+        grad = F.softmax_derivative(self.input, self.axis)
         return output_grad * grad
-    
+
 
 class Softplus(Opt):
     def __init__(self):
@@ -121,7 +121,7 @@ class Softplus(Opt):
         return F.softplus(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.softplus_derivative(self.inp)
+        grad = F.softplus_derivative(self.input)
         return output_grad * grad
 
 
@@ -133,7 +133,7 @@ class Softsign(Opt):
         return F.softsign(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        grad = F.softsign_derivative(self.inp)
+        grad = F.softsign_derivative(self.input)
         return output_grad * grad
 
 
@@ -164,4 +164,5 @@ def activation_byname(name: str, **kwargs):
     elif name == "softplus":
         return Softplus()
     else:
-        raise ValueError(f"Unknown built-in activation '{name}'\nAvailable built-in activations are: {" ".join(map(lambda x: f"'{x}'", available))}")
+        _s = lambda x: f"'{x}'"
+        raise ValueError(f"Unknown built-in activation '{name}'\nAvailable built-in activations are: {' '.join(map(_s, available))}")

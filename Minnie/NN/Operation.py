@@ -77,7 +77,7 @@ class WeightMultiplyOpt(ParamOpt):
         return np.dot(output_grad, np.transpose(self.param, (1, 0)))
     
     def compute_param_grad(self, output_grad: ndarray) -> ndarray:
-        return np.dot(np.transpose(self.inp, (1, 0)), output_grad)
+        return np.dot(np.transpose(self.input, (1, 0)), output_grad)
     
 
 class BiasAddOpt(ParamOpt):
@@ -93,5 +93,5 @@ class BiasAddOpt(ParamOpt):
         return output_grad * np.ones(self.input.shape)
     
     def compute_param_grad(self, output_grad: ndarray) -> ndarray:
-        param_grad =  output_grad * np.ones(self.input.shape)
+        param_grad = output_grad * np.ones(self.input.shape)
         return np.expand_dims(np.sum(param_grad, axis = 0), axis = 0)

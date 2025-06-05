@@ -69,4 +69,5 @@ def initializer_byname(name: str, **kwargs):
     elif name == "uniform":
         return Uniform(**kwargs)
     else:
-        raise ValueError(f"Unknown built-in initializer '{name}'\nAvailable built-in initializers are: {" ".join(map(lambda x: f"'{x}'", available))}")
+        _s = lambda x: f"'{x}'"
+        raise ValueError(f"Unknown built-in initializer '{name}'\nAvailable built-in initializers are: {' '.join(map(_s, available))}")

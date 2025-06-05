@@ -127,8 +127,8 @@ def softmax(x: ndarray, axis: int = -1) -> ndarray:
     return e_x / np.sum(e_x, axis = axis, keepdims = True)
 
 def softmax_derivative(x: ndarray, axis: int = -1) -> ndarray:
-    s = softmax(x, axis).reshape(-1, 1)
-    return np.diagflat(s) - np.dot(s, s.T)
+    s = softmax(x, axis)
+    return s * (1- s)
 
 
 # SeLU
@@ -244,7 +244,7 @@ def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int 
     
     return -np.mean(np.log(y_pred[np.arange(batch_size), y_true]))
 
-def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
+def scce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
     if from_logits:
         y_pred = softmax(y_pred, axis)
 

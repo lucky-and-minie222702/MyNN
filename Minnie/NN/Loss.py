@@ -12,19 +12,17 @@ class Loss(Opt):
         self.input_grad = None
         
     def forward(self, target: ndarray, prediction: ndarray) -> ndarray:
-        assert self.target.shape == self.prediction.shape
-        
         self.target = target
         self.prediction = prediction
         
-        loss = self.compute_output()
+        loss = self.compute_output(self.target, self.prediction)
         
         return loss
     
     def backward(self) -> ndarray:
-        self.input_grad = self.compute_input_grad()
+        self.input_grad = self.compute_input_grad(self.target, self.prediction)
         
-        assert self.input_grad == self.prediction
+        assert self.input_grad.shape == self.prediction.shape
         
         return self.input_grad
         
@@ -155,4 +153,5 @@ def loss_byname(name: str, **kwargs):
     elif name == "scce":
         return SparseCategoricalCrossentropy(**kwargs)
     else:
-        raise ValueError(f"Unknown built-in loss '{name}'\nAvailable built-in losses are: {" ".join(map(lambda x: f"'{x}'", available))}")
+        _s = lambda x: f"'{x}'"
+        raise ValueError(f"Unknown built-in loss '{name}'\nAvailable built-in losses are: {' '.join(map(_s, available))}")
