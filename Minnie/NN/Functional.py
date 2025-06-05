@@ -1,12 +1,59 @@
 from ..LibImport import *
 from scipy.special import erf
 
+#################
+#               #
+#  Initializer  #
+#               #
+#################
+
+def normal01_init(*shape) -> ndarray:
+    return np.random.normal(
+        loc = 0.0,
+        scale = 1.0,
+        size = shape
+    )
+
+
+def normal_init(*shape, mean: float = 0.0, std: float = 1.0) -> ndarray:
+    return np.random.normal(
+        loc = mean,
+        scale = std,
+        size = shape
+    )
+    
+
+def uniform_init(*shape, low: float = -1.0, high: float = 1.0) -> ndarray:
+    return np.random.uniform(
+        low = low,
+        high = high,
+        size = shape
+    )
+
+
+def he_init(*shape) -> np.ndarray:
+    fan_in = shape[0]
+    std = np.sqrt(2.0 / fan_in)
+    return np.random.randn(*shape) * std
+
+
+def xavier_init(*shape) -> np.ndarray:
+    fan_in, fan_out = shape
+    limit = np.sqrt(6.0 / (fan_in + fan_out))
+    return np.random.uniform(-limit, limit, size=shape)
+
+
+def lecun_init(*shape) -> np.ndarray:
+    fan_in = shape[0]
+    std = np.sqrt(1.0 / fan_in)
+    return np.random.randn(*shape) * std
+
+
 ################
 #              #
 #  ACTIVATION  #
 #              #
 ################
-
 
 # Sigmoid
 def sigmoid(x: ndarray) -> ndarray:
@@ -75,12 +122,12 @@ def softsign_derivative(x: ndarray) -> ndarray:
 
 
 # Softmax
-def softmax(x: ndarray) -> ndarray:
-    e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
-    return e_x / np.sum(e_x, axis=-1, keepdims=True)
+def softmax(x: ndarray, axis: int = -1) -> ndarray:
+    e_x = np.exp(x - np.max(x, axis = axis, keepdims = True))
+    return e_x / np.sum(e_x, axis = axis, keepdims = True)
 
-def softmax_derivative(x: ndarray) -> ndarray:
-    s = softmax(x).reshape(-1, 1)
+def softmax_derivative(x: ndarray, axis: int = -1) -> ndarray:
+    s = softmax(x, axis).reshape(-1, 1)
     return np.diagflat(s) - np.dot(s, s.T)
 
 
@@ -101,3 +148,109 @@ def celu(x: ndarray, alpha: float = 1.0) -> ndarray:
 
 def celu_derivative(x: ndarray, alpha: float = 1.0) -> ndarray:
     return np.where(x >= 0, 1.0, np.exp(x / alpha))
+
+
+##########
+#        #
+#  LOSS  #
+#        #
+##########
+
+# MSE - Mean Squared Error
+def mse(y_true: ndarray, y_pred: ndarray) -> float:
+    return np.mean((y_true - y_pred) ** 2)
+
+def mse_derivative(y_true: ndarray, y_pred: ndarray) -> ndarray:
+    return 2 * (y_pred - y_true) / y_true.size
+
+
+# MAE - Mean Absolute Error
+def mae(y_true: ndarray, y_pred: ndarray) -> float:
+    return np.mean(np.abs(y_true - y_pred))
+
+def mae_derivative(y_true: ndarray, y_pred: ndarray) -> ndarray:
+    return np.sign(y_pred - y_true) / y_true.size
+
+
+# RMSE - Root Mean Squared error
+def rmse(y_true: ndarray, y_pred: ndarray) -> float:
+    return np.sqrt(mse(y_true, y_pred))
+
+def rmse_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+    return (y_pred - y_true) / (rmse(y_true, y_pred) * y_true.size + eps)
+
+
+# MAPE - Mean Absolute Percentage Error
+def mape(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> float:
+    return np.mean(np.abs((y_true - y_pred) / (y_true + eps))) * 100
+
+def mape_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+    return (np.sign(y_pred - y_true) / (y_true + eps)) * (100 / y_true.size)
+
+
+# MSLE - Mean Squared Lagarithmic Error
+def msle(y_true: ndarray, y_pred: ndarray) -> float:
+    return np.mean((np.log1p(y_true) - np.log1p(y_pred)) ** 2)
+
+def msle_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+    return (2 / y_true.size) * (np.log1p(y_pred + eps) - np.log1p(y_true + eps)) / (y_pred + 1 + eps)
+
+
+# BCE - Binary Crossentropy
+def bce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = 1e-8) -> float:
+    if from_logits:
+        y_pred = sigmoid(y_pred)
+
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    
+    return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+def bce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = 1e-8) -> ndarray:
+    if from_logits:
+        y_pred = sigmoid(y_pred)
+        
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    batch_size = y_pred.shape[0]
+    
+    return (-(y_true / y_pred) + (1 - y_true) / (1 - y_pred)) / batch_size
+
+
+# CCE - Categorical Crossentropy
+def cce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> float:
+    if from_logits:
+        y_pred = softmax(y_pred, axis)
+
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    
+    return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+def cce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
+    if from_logits:
+        y_pred = softmax(y_pred, axis)
+        
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    batch_size = y_pred.shape[0]
+    
+    return (-y_true / y_pred) / batch_size
+
+
+# SCCE - Sparse Categorical Crossentropy
+def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> float:
+    if from_logits:
+        y_pred = softmax(y_pred, axis)
+
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    batch_size = y_pred.shape[0]
+    
+    return -np.mean(np.log(y_pred[np.arange(batch_size), y_true]))
+
+def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
+    if from_logits:
+        y_pred = softmax(y_pred, axis)
+
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    batch_size = y_pred.shape[0]
+    grad = np.zeros_like(y_pred)
+    grad[np.arange(batch_size), y_true] = -1 / y_pred[np.arange(batch_size), y_true]
+    
+    return grad / batch_size

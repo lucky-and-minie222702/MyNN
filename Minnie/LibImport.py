@@ -9,9 +9,6 @@ Chain = List[Array_Function]
 class NamedObj:
     def __init__(self, name: str):
         self.name = name
-        
-    def get_description(self):
-        return self.name
     
     def get_config(self):
         return None
