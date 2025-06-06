@@ -1,6 +1,7 @@
-from ..LibImport import *
-from .Operation import *
-from . import Layer
+from ..Core import *
+from .Operations import *
+from . import Layers
+import pickle
 
 
 class Module(NamedObj):
@@ -15,7 +16,7 @@ class Module(NamedObj):
         self.output = None
         self.output_grad = None
     
-    def forward(self, inp: ndarray) -> ndarray:
+    def forward(self, inp: ndarray, training: bool = True) -> ndarray:
         pass
     
     def backward(self, output_grad: ndarray) -> ndarray:
@@ -38,10 +39,9 @@ class Module(NamedObj):
 
 
 class SequentialModule(Module):
-    def __init__(self, layers: List[Layer.Layer]):
+    def __init__(self, layers: List[Layers.Layer]):
         super().__init__("sequential")
         self.layers = layers
-        self.check_io_features()
         
         self.layer_params: List[ndarray] = []
         self.layer_param_grads: List[ndarray] = []
@@ -52,36 +52,29 @@ class SequentialModule(Module):
         self.output = None
         self.output_grad = None
         
-    def add(self, layer):
+        self.check_subclass()
+        
+    def add(self, layer: Layers.Layer):
+        
+        assert issubclass(layer.__class__, Layers.Layer), "Layer must be a subclass of Layer"
+        assert layer.in_features == self.layers[-1].out_features, f"Layers {self.layers[-1].get_config()} and {layer.get_config()} are not compatible in terms features"
+        
         self.layers.append(layer)
-        self.check_io_features()
         
-    def check_io_features(self):
-        out_features = self.layers[0].out_features
+    def build(self):
+        for layer in self.layers:
+            layer.build()
         
-        report = []
+    def check_subclass(self):
+        for layer in self.layers:
+            assert issubclass(layer.__class__, Layers.Layer), "Layer must be a subclass of Layer"
         
-        for i, layer in enumerate(self.layers[1::], 1):
-            if out_features is None or layer.in_features is None:
-                continue
-            
-            if out_features != layer.in_features:
-                report.append((
-                    self.layers[i-1].get_config(),
-                    self.layers[i].get_config()
-                ))
-
-            out_features = layer.out_features
-            
-        if len(report) > 0:
-            raise ValueError(f"{"\n".join([f"Layers {l1} and {l2} are not compatible in terms features" for l1, l2 in report])}")
-        
-    def forward(self, inp: ndarray) -> ndarray:
+    def forward(self, inp: ndarray, training: bool = True) -> ndarray:
         self.input = inp
         self.output = inp
         
         for layer in self.layers:
-            self.output = layer.forward(self.output)
+            self.output = layer.forward(self.output, training = training)
             
         return self.output
     
@@ -114,6 +107,10 @@ class SequentialModule(Module):
         for layer in self.layers:
             self.layer_params.append(layer.get_params())
             
+    def set_layer_params(self, new_layer_params: List[List[ndarray]]):
+        for i, params in enumerate(new_layer_params):
+            self.layers[i].set_params(params)
+            
     def get_layer_params(self, copy: bool = False, collect: bool = True) -> List[List[ndarray]]:
         if collect:
             self.collect_layer_params()
@@ -125,6 +122,20 @@ class SequentialModule(Module):
         
     def get_layer_names(self) -> List[str]:
         return [layer.name for layer in self.layers]
+    
+    def get_layer_opt_names(self) -> List[str]:
+        return {layer.name: layer.get_opt_names() for layer in self.layers}
+
+    def save_pickle(self, file: str, collect: bool = True):
+        if collect:
+            self.collect_layer_params()
+            
+        with open(file, "wb") as f:
+            pickle.dump(self.layer_params, f)
+            
+    def load_pickle(self, file: str):
+        with open(file, "rb") as f:
+            self.set_layer_params(pickle.load(f))
     
     
 class DynamicModule(Module):

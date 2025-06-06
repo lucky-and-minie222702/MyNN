@@ -1,5 +1,5 @@
-from ..LibImport import *
-from .Operation import *
+from ..Core import *
+from .Operations import *
 from . import Functional as F
 
 
@@ -11,11 +11,11 @@ class Loss(Opt):
         self.prediction = None
         self.input_grad = None
         
-    def forward(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def forward(self, target: ndarray, prediction: ndarray, training: bool = True) -> ndarray:
         self.target = target
         self.prediction = prediction
         
-        loss = self.compute_output(self.target, self.prediction)
+        loss = self.compute_output(self.target, self.prediction, training = training)
         
         return loss
     
@@ -32,6 +32,9 @@ class Loss(Opt):
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
         raise NotImplementedError()
     
+    def get_desc(self):
+        return "Loss"
+    
     
 # CLASSIFICATION
 
@@ -40,7 +43,7 @@ class BinaryCrossentropy(Loss):
         super().__init__("bce")
         self.from_logits = from_logits
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.bce(target, prediction, self.from_logits)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -53,7 +56,7 @@ class CategoricalCrossentropy(Loss):
         self.from_logits = from_logits
         self.axis = axis
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.cce(target, prediction, self.from_logits, self.axis)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -66,7 +69,7 @@ class SparseCategoricalCrossentropy(Loss):
         self.from_logits = from_logits
         self.axis = axis
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.scce(target, prediction, self.from_logits, self.axis)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -79,7 +82,7 @@ class MeanSquaredError(Loss):
     def __init__(self):
         super().__init__("mse")
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.mse(target, prediction)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -90,7 +93,7 @@ class RootMeanSquaredError(Loss):
     def __init__(self):
         super().__init__("mse")
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.rmse(target, prediction)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -101,7 +104,7 @@ class MeanAbsoluteError(Loss):
     def __init__(self):
         super().__init__("mae")
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.mae(target, prediction)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -112,7 +115,7 @@ class MeanAbsolutePercentageError(Loss):
     def __init__(self):
         super().__init__("mape")
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.mape(target, prediction)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
@@ -123,7 +126,7 @@ class MeanSquaredLogarithmicError(Loss):
     def __init__(self):
         super().__init__("msle")
 
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
         return F.msle(target, prediction)
     
     def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:

@@ -1,4 +1,4 @@
-from ..LibImport import *
+from ..Core import *
 from scipy.special import erf
 
 #################
@@ -6,13 +6,6 @@ from scipy.special import erf
 #  Initializer  #
 #               #
 #################
-
-def normal01_init(*shape) -> ndarray:
-    return np.random.normal(
-        loc = 0.0,
-        scale = 1.0,
-        size = shape
-    )
 
 
 def normal_init(*shape, mean: float = 0.0, std: float = 1.0) -> ndarray:
@@ -57,7 +50,7 @@ def lecun_init(*shape) -> np.ndarray:
 
 # Sigmoid
 def sigmoid(x: ndarray) -> ndarray:
-    return 1 / (1 + np.exp(-x))
+    return 1 / (1 + np.exp(-np.clip(x, -100, 100)))
 
 def sigmoid_derivative(x: ndarray) -> ndarray:
     s = sigmoid(x)
@@ -176,15 +169,15 @@ def mae_derivative(y_true: ndarray, y_pred: ndarray) -> ndarray:
 def rmse(y_true: ndarray, y_pred: ndarray) -> float:
     return np.sqrt(mse(y_true, y_pred))
 
-def rmse_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+def rmse_derivative(y_true: ndarray, y_pred: ndarray, eps: float = EPSILON) -> ndarray:
     return (y_pred - y_true) / (rmse(y_true, y_pred) * y_true.size + eps)
 
 
 # MAPE - Mean Absolute Percentage Error
-def mape(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> float:
+def mape(y_true: ndarray, y_pred: ndarray, eps: float = EPSILON) -> float:
     return np.mean(np.abs((y_true - y_pred) / (y_true + eps))) * 100
 
-def mape_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+def mape_derivative(y_true: ndarray, y_pred: ndarray, eps: float = EPSILON) -> ndarray:
     return (np.sign(y_pred - y_true) / (y_true + eps)) * (100 / y_true.size)
 
 
@@ -192,12 +185,12 @@ def mape_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndar
 def msle(y_true: ndarray, y_pred: ndarray) -> float:
     return np.mean((np.log1p(y_true) - np.log1p(y_pred)) ** 2)
 
-def msle_derivative(y_true: ndarray, y_pred: ndarray, eps: float = 1e-8) -> ndarray:
+def msle_derivative(y_true: ndarray, y_pred: ndarray, eps: float = EPSILON) -> ndarray:
     return (2 / y_true.size) * (np.log1p(y_pred + eps) - np.log1p(y_true + eps)) / (y_pred + 1 + eps)
 
 
 # BCE - Binary Crossentropy
-def bce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = 1e-8) -> float:
+def bce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = EPSILON) -> float:
     if from_logits:
         y_pred = sigmoid(y_pred)
 
@@ -205,18 +198,17 @@ def bce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float 
     
     return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
 
-def bce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = 1e-8) -> ndarray:
+def bce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, eps: float = EPSILON) -> ndarray:
     if from_logits:
         y_pred = sigmoid(y_pred)
         
     y_pred = np.clip(y_pred, eps, 1 - eps)
-    batch_size = y_pred.shape[0]
     
-    return (-(y_true / y_pred) + (1 - y_true) / (1 - y_pred)) / batch_size
+    return y_pred - y_true
 
 
 # CCE - Categorical Crossentropy
-def cce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> float:
+def cce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = EPSILON) -> float:
     if from_logits:
         y_pred = softmax(y_pred, axis)
 
@@ -224,18 +216,17 @@ def cce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int =
     
     return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
 
-def cce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
+def cce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = EPSILON) -> ndarray:
     if from_logits:
         y_pred = softmax(y_pred, axis)
         
     y_pred = np.clip(y_pred, eps, 1 - eps)
-    batch_size = y_pred.shape[0]
     
-    return (-y_true / y_pred) / batch_size
+    return y_pred - y_true
 
 
 # SCCE - Sparse Categorical Crossentropy
-def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> float:
+def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = EPSILON) -> float:
     if from_logits:
         y_pred = softmax(y_pred, axis)
 
@@ -244,13 +235,13 @@ def scce(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int 
     
     return -np.mean(np.log(y_pred[np.arange(batch_size), y_true]))
 
-def scce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = 1e-8) -> ndarray:
+def scce_derivative(y_true: ndarray, y_pred: ndarray, from_logits: bool = False, axis: int = -1, eps: float = EPSILON) -> ndarray:
     if from_logits:
         y_pred = softmax(y_pred, axis)
 
     y_pred = np.clip(y_pred, eps, 1 - eps)
     batch_size = y_pred.shape[0]
-    grad = np.zeros_like(y_pred)
-    grad[np.arange(batch_size), y_true] = -1 / y_pred[np.arange(batch_size), y_true]
+    grad = y_pred.copy()
+    grad[np.arange(batch_size), y_true] -= 1
     
-    return grad / batch_size
+    return grad

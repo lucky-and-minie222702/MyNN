@@ -1,12 +1,8 @@
-from Minnie.NN import Initializer
-from ..LibImport import *
-from .Operation import *
-from .Activation import *
-from .Initializer import *
+from ..Core import *
+from .Operations import *
+from .Activations import *
+from .Initializers import *
 from . import Functional as F
-
-
-_LAYER_COUNT = 0
 
 
 ################
@@ -19,7 +15,6 @@ class Layer(NamedObj):
     def __init__(self, name: str = ""):
         super().__init__(name)
         
-        self.initialized = False
         self.operations: List[Opt] = []
         self.params: List[ndarray] = []
         self.param_grads: List[ndarray] = []
@@ -36,16 +31,12 @@ class Layer(NamedObj):
     def build(self):
         raise NotImplementedError()
     
-    def forward(self, inp: ndarray) -> ndarray:
-        if not self.initialized:
-            self.build()
-            self.initialized = True
-            
+    def forward(self, inp: ndarray, training: bool = True) -> ndarray:
         self.input = inp
         self.output = inp
          
         for opt in self.operations:
-            self.output = opt.forward(self.output)
+            self.output = opt.forward(self.output, training = training)
         
         return self.output
     
@@ -80,6 +71,11 @@ class Layer(NamedObj):
         for opt in self.operations:
             if issubclass(opt.__class__, ParamOpt):
                 self.params.append(opt.param)
+                
+    def set_params(self, new_params: List[ndarray]):
+        for i, opt in enumerate(self.operations):
+            if issubclass(opt.__class__, ParamOpt):
+                opt.set_param(new_params[i])
             
     def get_params(self, copy: bool = False, collect: bool = True) -> List[ndarray]:
         if collect:
@@ -108,13 +104,7 @@ class Layer(NamedObj):
 ###########
 
 class Dense(Layer):
-    def __init__(self, in_features: int, out_features: int, activation: str | Opt | None = None, initializer: str | Callable = "xavier", bias: bool = True, name: str = None):
-        global _LAYER_COUNT
-        _LAYER_COUNT += 1
-
-        if name is None:
-            name = f"dense_{_LAYER_COUNT}"
-            
+    def __init__(self, in_features: int, out_features: int, activation: str | Opt | None = None, initializer: str | Initializer = "xavier", bias: bool = True, name: str = "dense"):    
         super().__init__(name)
         
         self.in_features = in_features
@@ -125,14 +115,11 @@ class Dense(Layer):
         self.activation = activation
         self.initializer = initializer
         
-        if isinstance(self.activation, str):
-            self.activation = activation_byname(self.activation)
-            
+        
+    def build(self):    
         if isinstance(self.initializer, str):
             self.initializer = initializer_byname(self.initializer)
         
-        
-    def build(self):
         self.operations.append(
             WeightMultiplyOpt(self.initializer(self.in_features, self.out_features))
         )
@@ -142,6 +129,9 @@ class Dense(Layer):
                 BiasAddOpt(self.initializer(1, self.out_features))
             )
 
+        if isinstance(self.activation, str):
+            self.activation = activation_byname(self.activation)
+
         if self.activation is not None:
             self.operations.append(
                 self.activation
@@ -150,14 +140,8 @@ class Dense(Layer):
 
 
 class Activation(Layer):
-    def __init__(self, activation_name: str = None, name: str = None):
-        global _LAYER_COUNT
-        _LAYER_COUNT += 1
-
-        if name is None:
-            name = f"{'activation' if activation_name is None else activation_name}_{_LAYER_COUNT}"
-            
-        super().__init__(name)
+    def __init__(self, activation_name: str, name: str = None):            
+        super().__init__(name if name is not None else activation_name)
         
         self.f = activation_name
         
@@ -167,4 +151,16 @@ class Activation(Layer):
     def build(self):
         self.operations.append(
             self.f
+        )
+
+
+class Dropout(Layer):
+    def __init__(self, rate: float, name: str = "dropout"):
+        super().__init__(name)
+        
+        self.rate = rate
+        
+    def build(self):
+        self.operations.append(
+            DropoutOpt(rate = self.rate)
         )

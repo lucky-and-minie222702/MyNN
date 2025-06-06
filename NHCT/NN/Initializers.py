@@ -1,41 +1,41 @@
-from ..LibImport import *
-from .Operation import *
+from ..Core import *
+from .Operations import *
 from . import Functional as F
 
-class He:
+
+class Initializer(NamedObj):
+    pass
+
+class He(Initializer):
     def __init__(self):
+        super().__init__("he")
         pass
 
     def __call__(self, *shape):
         return F.he_init(*shape)
 
     
-class Xavier:
+class Xavier(Initializer):
     def __init__(self):
+        super().__init__("xavier")
         pass
 
     def __call__(self, *shape):
         return F.xavier_init(*shape)
     
 
-class LeCun:
+class LeCun(Initializer):
     def __init__(self):
+        super().__init__("lecun")
         pass
 
     def __call__(self, *shape):
         return F.lecun_init(*shape)
 
-    
-class Normal01:
-    def __init__(self):
-        pass
 
-    def __call__(self, *shape):
-        return F.normal01_init(*shape)
-    
-
-class Normal:
+class Normal(Initializer):
     def __init__(self, mean: float = 0.0, std: float = 1.0):
+        super().__init__("normal")
         self.mean = mean
         self.std = std
 
@@ -43,8 +43,9 @@ class Normal:
         return F.normal_init(*shape, mean = self.mean, std = self.std)
     
 
-class Uniform:
+class Uniform(Initializer):
     def __init__(self, low: float = -1.0, high: float = 1.0):
+        super().__init__("uniform")
         self.low = low
         self.high = high
 
@@ -53,7 +54,7 @@ class Uniform:
     
 
 def initializer_byname(name: str, **kwargs):
-    available = ["he", "xavier", "lecun", "normal01", "normal", "uniform"]
+    available = ["he", "xavier", "lecun", "normal", "uniform"]
     name = name.lower()
     
     if name == "he":
@@ -62,8 +63,6 @@ def initializer_byname(name: str, **kwargs):
         return Xavier()
     elif name == "lecun":
         return LeCun()
-    elif name == "normal01":
-        return Normal01()
     elif name == "normal":
         return Normal(**kwargs)
     elif name == "uniform":

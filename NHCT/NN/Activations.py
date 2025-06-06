@@ -1,5 +1,5 @@
-from ..LibImport import *
-from .Operation import *
+from ..Core import *
+from .Operations import *
 from . import Functional as F
 
 
@@ -7,7 +7,7 @@ class Sigmoid(Opt):
     def __init__(self):
         super().__init__("sigmoid")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.sigmoid(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -19,7 +19,7 @@ class Tanh(Opt):
     def __init__(self):
         super().__init__("tanh")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.tanh(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -31,7 +31,7 @@ class ReLU(Opt):
     def __init__(self):
         super().__init__("relu")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.relu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -44,7 +44,7 @@ class LeakyReLU(Opt):
         super().__init__("relu")
         self.alpha = alpha
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.leaky_relu(inp, self.alpha)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -56,7 +56,7 @@ class SiLU(Opt):
     def __init__(self):
         super().__init__("silu")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.silu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -68,7 +68,7 @@ class GeLU(Opt):
     def __init__(self):
         super().__init__("gelu")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.gelu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -80,7 +80,7 @@ class SeLU(Opt):
     def __init__(self):
         super().__init__("selu")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.selu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -92,7 +92,7 @@ class CeLU(Opt):
     def __init__(self):
         super().__init__("celu")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.celu(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -105,7 +105,7 @@ class Softmax(Opt):
         super().__init__("softmax")
         self.axis = axis
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.softmax(inp, self.axis)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -117,7 +117,7 @@ class Softplus(Opt):
     def __init__(self):
         super().__init__("softplus")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.softplus(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
@@ -129,7 +129,7 @@ class Softsign(Opt):
     def __init__(self):
         super().__init__("softsign")
         
-    def compute_output(self, inp: ndarray) -> ndarray:
+    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
         return F.softsign(inp)
     
     def compute_input_grad(self, output_grad: ndarray) -> ndarray:
