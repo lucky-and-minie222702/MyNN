@@ -116,7 +116,7 @@ class SequentialTrainer(Trainer):
                 list_metrics = [f"{name}: {value / (step + 1):.4f}" for name, value in total_metrics.items()]
                 
                 postfix = f"loss: {total_loss / (step + 1):.4f} " + " | ".join(list_metrics)
-                pbar.set_description(f"{step:>{step_length}}/{step_per_epoch:>{step_length}} |> " + postfix)
+                pbar.set_description(f"{step+1:>{step_length}}/{step_per_epoch:>{step_length}} |> " + postfix)
 
             history["train_loss"].append(total_loss / step_per_epoch)
             for k in metrics.keys():
