@@ -47,6 +47,7 @@ class ParamOpt(Opt):
         
     def forward(self, inp: JArray, training: bool = True) -> JArray:
         self.input = inp
+        # print(f"{self.init_id} Outside:", self.param.sum())
         self.output = self.jit_compute_output(self.param, self.input, training = training)
         return self.output
         
@@ -64,7 +65,6 @@ class ParamOpt(Opt):
     def set_param(self, new_param: JArray):
         assert self.param.shape == new_param.shape
         self.param = new_param
-        exit()
         
     def compute_output(self, param: JArray, inp: JArray, training: bool = True) -> JArray:
         raise NotImplementedError()
@@ -95,6 +95,7 @@ class WeightMultiplyOpt(ParamOpt):
         # output: (batch_size, out_features)
 
     def compute_output(self, param: JArray, inp: JArray, training: bool = True) -> JArray:
+        # jax.debug.print("{} Inside: {}", self.init_id, param.sum())
         return jnp.dot(inp, param)
     
     def compute_input_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:

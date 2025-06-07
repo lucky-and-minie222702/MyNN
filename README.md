@@ -54,12 +54,6 @@ There is only one available model design with 1-input 1-output sequential struct
 
 -   SequentialTrainer (for `SequentialModule`)
 
-# Example
-
-In the `examples` folder a file named `test_lib.py` <br>
-Run the `test_lib.py` outside the `examples` folder, run it at the root folder contains `NHCT` folder<br>
-The given example code run a task on [this kaggle competition](https://www.kaggle.com/competitions/digit-recognizer/) for demonstration
-
 ### Note
 
 Documents will be available when i finish all the objects

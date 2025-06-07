@@ -84,7 +84,7 @@ class MeanSquaredError(Loss):
         super().__init__("mse")
 
     def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
-        return F.mse(target, prediction)
+        return F.mse_loss(target, prediction)
     
     def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.mse_derivative(target, prediction)

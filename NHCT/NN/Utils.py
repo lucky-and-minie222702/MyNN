@@ -140,7 +140,7 @@ class SequentialTrainer(Trainer):
                     desc_str = f"{step+1:>{step_length}}/{step_per_epoch:>{step_length}} |> [loss={total_loss / (step + 1):.4f}"
                 pbar.set_description(desc_str + "]")
 
-
+ 
             history["train_loss"].append(total_loss / step_per_epoch)
             for k in metrics.keys():
                 history["train_" + k].append(total_metrics[k] / step_per_epoch)
@@ -162,5 +162,6 @@ class SequentialTrainer(Trainer):
                     history["val_" + k].append(val_metrics[k])
                     
             # callbacks
+            self.optimizer.reset_after_epoch()
                 
         return history
