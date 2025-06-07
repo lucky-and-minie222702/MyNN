@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 
+print("Jax default:", jax.default_backend(), "devices:", jax.devices())
+
 model = Modules.SequentialModule([
     Layers.Dense(128, 32, "relu", dropout = 0.5),
     Layers.Dense(32, 10, "softmax"),

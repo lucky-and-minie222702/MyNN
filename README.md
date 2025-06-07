@@ -2,7 +2,7 @@
 
 Huge respect to NHCT who always support me <br>
 This framework is inspired on both Pytorch and Keras syntax and idea <br>
-This framework is heavily based on Numpy
+This framework is based on Jax
 
 # Available objects
 
