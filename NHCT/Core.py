@@ -22,7 +22,7 @@ class NamedObj:
             print(self.init_log)
             
         OBJ_COUNT += 1
-        self.key_id = OBJ_COUNT
+        self.init_id = OBJ_COUNT
     
     def get_config(self):
         return None

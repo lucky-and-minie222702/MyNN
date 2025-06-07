@@ -120,11 +120,17 @@ class SequentialModule(Module):
         else:
             return self.layer_params
         
-    def get_layer_names(self) -> List[str]:
-        return [layer.name for layer in self.layers]
+    def get_layer_names(self, get_init_id: bool = True) -> List[str]:
+        if get_init_id:
+            return [f"{layer.name}_{layer.init_id}" for layer in self.layers]
+        else:
+            return [layer.name for layer in self.layers]
     
-    def get_layer_opt_names(self) -> List[str]:
-        return {layer.name: layer.get_opt_names() for layer in self.layers}
+    def get_layer_opt_names(self, get_init_id: bool = True) -> List[str]:
+        if get_init_id:
+            return [(f"{layer.name}_{layer.init_id}", layer.get_opt_names(True)) for layer in self.layers]
+        else:
+            return [(layer.name, layer.get_opt_names(False)) for layer in self.layers]
 
     def save_pickle(self, file: str, collect: bool = True):
         if collect:

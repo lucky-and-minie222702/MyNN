@@ -86,8 +86,11 @@ class Layer(NamedObj):
         else:
             return self.params
                 
-    def get_opt_names(self) -> List[str]:
-        return [opt.name for opt in self.operations]
+    def get_opt_names(self, get_init_id: bool = True) -> List[str]:
+        if get_init_id:
+            return [f"{opt.name}_{opt.init_id}" for opt in self.operations]
+        else:
+            return [opt.name for opt in self.operations]
     
     def get_config(self) -> Dict[str, Any]:
         return {
@@ -104,7 +107,7 @@ class Layer(NamedObj):
 ###########
 
 class Dense(Layer):
-    def __init__(self, in_features: int, out_features: int, activation: str | Opt | None = None, initializer: str | Initializer = "xavier", bias: bool = True, name: str = "dense"):    
+    def __init__(self, in_features: int, out_features: int, activation: str | Opt | None = None, dropout: float | None = None, initializer: str | Initializer = "xavier", bias: bool = True, name: str = "dense"):    
         super().__init__(name)
         
         self.in_features = in_features
@@ -114,6 +117,8 @@ class Dense(Layer):
         
         self.activation = activation
         self.initializer = initializer
+        
+        self.dropout = dropout
         
         
     def build(self):    
@@ -137,6 +142,10 @@ class Dense(Layer):
                 self.activation
             )
 
+        if self.dropout is not None:
+            self.operations.append(
+                DropoutOpt(self.dropout)
+            )
 
 
 class Activation(Layer):

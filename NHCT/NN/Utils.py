@@ -157,7 +157,7 @@ class SequentialTrainer(Trainer):
                 for k in metrics.keys():
                     history["val_" + k].append(val_metrics[k])
                     
-            # callbacks + zero grad
-            self.optimizer.zero_grad()
+            # callbacks
+            self.optimizer.reset_after_epoch()
                 
         return history

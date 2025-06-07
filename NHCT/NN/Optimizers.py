@@ -16,25 +16,32 @@ class Optimizer:
     def step(self):
         raise NotImplementedError()
         
-    def zero_grad(self):
+    def zero_grads(self):
         for i in range(len(self.module.layer_params)): 
             for j in range(len(self.module.layer_params[i])):
                 self.module.layer_param_grads[i][j] = 0
+    
+    def reset_after_epoch(self):
+        raise NotImplementedError()
     
     
 class SGD(Optimizer):
     def __init__(self, module: Modules.Module, lr: float = 0.01, momentum: float = 0.0):
         super(). __init__(module, lr)
         self.momentum = momentum
+        self.velocities = None
         
-        self.collect()
-        
+    def reset_after_epoch(self):
         self.velocities = [[np.zeros(param.shape)
                             for param in params]
                                 for params in self.module.layer_params]
         
     def step(self):
         super().collect()
+        if self.velocities is None:
+            self.velocities = [[np.zeros(param.shape)
+                                for param in params]
+                                    for params in self.module.layer_params]
         for i in range(len(self.module.layer_params)): 
             for j in range(len(self.module.layer_params[i])):
                 
