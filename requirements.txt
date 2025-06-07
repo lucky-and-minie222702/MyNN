@@ -1,5 +1,4 @@
 jax==0.4.38
-matplotlib==3.10.3
 numpy==2.2.6
 pandas==2.3.0
 scikit_learn==1.7.0
