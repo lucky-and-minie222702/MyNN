@@ -7,7 +7,7 @@ class Initializer(NamedObj):
     def __init__(self, name: str = ""):
         super().__init__(name)
         
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         raise NotImplementedError()
     
     def __call__(self, *shape):
@@ -17,7 +17,7 @@ class He(Initializer):
     def __init__(self):
         super().__init__("he")
 
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         return F.he_init(*shape)
 
     
@@ -25,7 +25,7 @@ class Xavier(Initializer):
     def __init__(self):
         super().__init__("xavier")
 
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         return F.xavier_init(*shape)
     
 
@@ -33,7 +33,7 @@ class LeCun(Initializer):
     def __init__(self):
         super().__init__("lecun")
 
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         return F.lecun_init(*shape)
 
 
@@ -43,7 +43,7 @@ class Normal(Initializer):
         self.mean = mean
         self.std = std
 
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         return F.normal_init(*shape, mean = self.mean, std = self.std)
     
 
@@ -53,7 +53,7 @@ class Uniform(Initializer):
         self.low = low
         self.high = high
 
-    def init_param(self, *shape) -> ndarray:
+    def init_param(self, *shape) -> JArray:
         return F.uniform_init(*shape, low = self.low, high = self.high)
     
 

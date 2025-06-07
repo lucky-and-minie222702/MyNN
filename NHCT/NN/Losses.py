@@ -1,6 +1,7 @@
 from ..Core import *
 from .Operations import *
 from . import Functional as F
+from .. import Math
 
 
 class Loss(Opt):
@@ -11,29 +12,29 @@ class Loss(Opt):
         self.prediction = None
         self.input_grad = None
         
-    def forward(self, target: ndarray, prediction: ndarray, training: bool = True) -> ndarray:
+        self.jit_compute_output = jit(self.compute_output)
+        self.jit_compute_input_grad = jit(self.compute_input_grad)
+        
+    def forward(self, target: JArray, prediction: JArray, training: bool = True) -> JArray:
         self.target = target
         self.prediction = prediction
         
-        loss = self.compute_output(self.target, self.prediction, training = training)
+        loss = self.jit_compute_output(self.target, self.prediction, training = training)
         
         return loss
     
-    def backward(self) -> ndarray:
-        self.input_grad = self.compute_input_grad(self.target, self.prediction)
+    def backward(self) -> JArray:
+        self.input_grad = self.jit_compute_input_grad(self.target, self.prediction)
         
         assert self.input_grad.shape == self.prediction.shape
         
         return self.input_grad
         
-    def compute_output(self, target: ndarray, prediction: ndarray) -> float:
+    def compute_output(self, target: JArray, prediction: JArray) -> float:
         raise NotImplementedError()
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
-        raise NotImplementedError()
-    
-    def get_desc(self):
-        return "Loss"
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
+        return Math.derivative(lambda pred: self.compute_output(target, pred))
     
     
 # CLASSIFICATION
@@ -43,10 +44,10 @@ class BinaryCrossentropy(Loss):
         super().__init__("bce")
         self.from_logits = from_logits
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.bce(target, prediction, self.from_logits)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.bce_loss(target, prediction, self.from_logits)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.bce_derivative(target, prediction, self.from_logits)
     
 
@@ -56,10 +57,10 @@ class CategoricalCrossentropy(Loss):
         self.from_logits = from_logits
         self.axis = axis
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.cce(target, prediction, self.from_logits, self.axis)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.cce_loss(target, prediction, self.from_logits, self.axis)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.cce_derivative(target, prediction, self.from_logits, self.axis)
     
     
@@ -69,10 +70,10 @@ class SparseCategoricalCrossentropy(Loss):
         self.from_logits = from_logits
         self.axis = axis
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.scce(target, prediction, self.from_logits, self.axis)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.scce_loss(target, prediction, self.from_logits, self.axis)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.scce_derivative(target, prediction, self.from_logits, self.axis)
 
 
@@ -82,10 +83,10 @@ class MeanSquaredError(Loss):
     def __init__(self):
         super().__init__("mse")
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
         return F.mse(target, prediction)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.mse_derivative(target, prediction)
     
     
@@ -93,10 +94,10 @@ class RootMeanSquaredError(Loss):
     def __init__(self):
         super().__init__("mse")
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.rmse(target, prediction)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.rmse_loss(target, prediction)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.rmse_derivative(target, prediction)
     
 
@@ -104,10 +105,10 @@ class MeanAbsoluteError(Loss):
     def __init__(self):
         super().__init__("mae")
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.mae(target, prediction)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.mae_loss(target, prediction)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.mae_derivative(target, prediction)
     
     
@@ -115,10 +116,10 @@ class MeanAbsolutePercentageError(Loss):
     def __init__(self):
         super().__init__("mape")
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.mape(target, prediction)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.mape_loss(target, prediction)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.mape_derivative(target, prediction)
     
     
@@ -126,10 +127,10 @@ class MeanSquaredLogarithmicError(Loss):
     def __init__(self):
         super().__init__("msle")
 
-    def compute_output(self, target: ndarray, prediction: ndarray, training: bool = True) -> float:
-        return F.msle(target, prediction)
+    def compute_output(self, target: JArray, prediction: JArray, training: bool = True) -> float:
+        return F.msle_loss(target, prediction)
     
-    def compute_input_grad(self, target: ndarray, prediction: ndarray) -> ndarray:
+    def compute_input_grad(self, target: JArray, prediction: JArray) -> JArray:
         return F.msle_derivative(target, prediction)
     
 
@@ -140,15 +141,15 @@ def loss_byname(name: str, **kwargs):
     name = name.lower()
     
     if name == "mse":
-        return MeanSquaredError()
+        return MeanSquaredError(**kwargs)
     elif name == "rmse":
-        return RootMeanSquaredError()
+        return RootMeanSquaredError(**kwargs)
     elif name == "mae":
-        return MeanAbsolutePercentageError()
+        return MeanAbsolutePercentageError(**kwargs)
     elif name == "mape":
-        return MeanAbsolutePercentageError()
+        return MeanAbsolutePercentageError(**kwargs)
     elif name == "msle":
-        return MeanSquaredLogarithmicError()
+        return MeanSquaredLogarithmicError(**kwargs)
     elif name == "bce":
         return BinaryCrossentropy(**kwargs)
     elif name == "cce":

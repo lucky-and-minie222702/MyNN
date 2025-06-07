@@ -13,38 +13,47 @@ class Opt(NamedObj):
         
         self.output = None
         self.output_grad = None
+        
+        self.jit_compute_output = jit(self.compute_output)
+        self.jit_compute_input_grad = jit(self.compute_input_grad)
                 
-    def forward(self, inp: ndarray, training: bool = True) -> ndarray:
+    def forward(self, inp: JArray, training: bool = True) -> JArray:
         self.input = inp
-        self.output = self.compute_output(self.input, training = training)
+        self.output = self.jit_compute_output(self.input, training = training)
         return self.output
         
-    def backward(self, output_grad: ndarray) -> ndarray:
+    def backward(self, output_grad: JArray) -> JArray:
         self.output_grad = output_grad
-        self.input_grad = self.compute_input_grad(self.output_grad)
+        self.input_grad = self.jit_compute_input_grad(self.input, self.output_grad)
         
         assert self.input.shape == self.input_grad.shape
         assert self.output.shape == self.output_grad.shape
         
         return self.input_grad
     
-    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
+    def compute_output(self, inp: JArray, training: bool = True) -> JArray:
         raise NotImplementedError()
     
-    def compute_input_grad(self, output_grad: ndarray) -> ndarray:
+    def compute_input_grad(self, inp: JArray, output_grad: JArray) -> JArray:
         raise NotImplementedError()
     
 
 class ParamOpt(Opt):
-    def __init__(self, param: ndarray, name: str):
+    def __init__(self, param: JArray, name: str):
         super().__init__(name)
         self.param = param
         self.param_grad = None
+        self.jit_compute_param_grad = jit(self.compute_param_grad)
         
-    def backward(self, output_grad: ndarray) -> ndarray:
+    def forward(self, inp: JArray, training: bool = True) -> JArray:
+        self.input = inp
+        self.output = self.jit_compute_output(self.param, self.input, training = training)
+        return self.output
+        
+    def backward(self, output_grad: JArray) -> JArray:
         self.output_grad = output_grad
-        self.input_grad = self.compute_input_grad(self.output_grad)
-        self.param_grad = self.compute_param_grad(self.output_grad)
+        self.input_grad = self.jit_compute_input_grad(self.param, self.input, self.output_grad)
+        self.param_grad = self.jit_compute_param_grad(self.param, self.input, self.output_grad)
         
         assert self.input.shape == self.input_grad.shape
         assert self.output.shape == self.output_grad.shape
@@ -52,11 +61,18 @@ class ParamOpt(Opt):
         
         return self.input_grad
     
-    def set_param(self, new_param: ndarray):
+    def set_param(self, new_param: JArray):
         assert self.param.shape == new_param.shape
         self.param = new_param
+        exit()
+        
+    def compute_output(self, param: JArray, inp: JArray, training: bool = True) -> JArray:
+        raise NotImplementedError()
     
-    def compute_param_grad(self, output_grad: ndarray) -> ndarray:
+    def compute_input_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
+        raise NotImplementedError()
+    
+    def compute_param_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
         raise NotImplementedError()
 
 
@@ -71,21 +87,21 @@ class ParamOpt(Opt):
 # param_grad = ∂L/∂W = ∂L/∂Y * ∂Y/∂W
 
 class WeightMultiplyOpt(ParamOpt):
-    def __init__(self, W: ndarray, name: str = "weight_mutiply"):
+    def __init__(self, W: JArray, name: str = "weight_mutiply"):
         super().__init__(W, name)
         
         # param: (in_features, out_featrues)
         # input: (batch_size, in_features)
         # output: (batch_size, out_features)
-        
-    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
-        return np.dot(inp, self.param)
+
+    def compute_output(self, param: JArray, inp: JArray, training: bool = True) -> JArray:
+        return jnp.dot(inp, param)
     
-    def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        return np.dot(output_grad, np.transpose(self.param, (1, 0)))
+    def compute_input_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
+        return jnp.dot(output_grad, jnp.transpose(param, (1, 0)))
     
-    def compute_param_grad(self, output_grad: ndarray) -> ndarray:
-        return np.dot(np.transpose(self.input, (1, 0)), output_grad)
+    def compute_param_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
+        return jnp.dot(jnp.transpose(inp, (1, 0)), output_grad)
     
 
 class BiasAddOpt(ParamOpt):
@@ -94,15 +110,15 @@ class BiasAddOpt(ParamOpt):
         # make sure bias.shape = (1, out_features)
         assert self.param.shape[0] == 1
         
-    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
-        return inp + self.param
+    def compute_output(self, param: JArray, inp: JArray, training: bool = True) -> JArray:
+        return inp + param
     
-    def compute_input_grad(self, output_grad: ndarray) -> ndarray:
-        return output_grad * np.ones(self.input.shape)
+    def compute_input_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
+        return output_grad * jnp.ones(inp.shape)
     
-    def compute_param_grad(self, output_grad: ndarray) -> ndarray:
-        param_grad = output_grad * np.ones(self.input.shape)
-        return np.expand_dims(np.sum(param_grad, axis = 0), axis = 0)
+    def compute_param_grad(self, param: JArray, inp: JArray, output_grad: JArray) -> JArray:
+        param_grad = output_grad * jnp.ones(inp.shape)
+        return jnp.expand_dims(jnp.sum(param_grad, axis = 0), axis = 0)
     
     
 class DropoutOpt(Opt):
@@ -114,12 +130,17 @@ class DropoutOpt(Opt):
         self.rate = rate
         assert 0.0 <= self.rate <= 1.0, f"Invalid rate {rate}"
         
-    def compute_output(self, inp: ndarray, training: bool = True) -> ndarray:
+    def forward(self, inp: JArray, training: bool = True) -> JArray:
+        self.input = inp
+        
         self.mask = np.random.rand(*inp.shape) > self.rate
-        if training:
-            return self.mask * inp
-        else:
-            return inp
+        self.mask = jnp.asarray(self.mask)
+        
+        self.output = self.jit_compute_output(self.input, training = training)
+        return self.output
+        
+    def compute_output(self, inp: JArray, training: bool = True) -> JArray:
+        return lax.cond(training, lambda: self.mask * inp, lambda: inp)
     
-    def compute_input_grad(self, output_grad: ndarray) -> ndarray:
+    def compute_input_grad(self, inp: JArray, output_grad: JArray) -> JArray:
         return output_grad * self.mask

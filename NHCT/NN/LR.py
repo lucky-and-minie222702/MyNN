@@ -11,5 +11,5 @@ class LRSchdule(NamedObj):
         self.lr = self.update()
         
     def update(self, epoch: int, current_lr: float, **kwargs) -> float:
-        raise NotImplementedError()
+        raise NotImplementedError
         

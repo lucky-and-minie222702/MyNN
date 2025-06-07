@@ -37,7 +37,7 @@ class SGD(Optimizer):
                                 for params in self.module.layer_params]
         
     def step(self):
-        super().collect()
+        self.collect()
         if self.velocities is None:
             self.velocities = [[np.zeros(param.shape)
                                 for param in params]
@@ -48,7 +48,7 @@ class SGD(Optimizer):
                    self.velocities[i][j] *= self.momentum
                    self.velocities[i][j] += self.lr * self.module.layer_param_grads[i][j]
                    
-                   self.module.layer_params[i][j] -= self.velocities[i][j]
+                   self.module.layer_params[i][j] = self.module.layer_params[i][j] - self.velocities[i][j]
                    
 
 def optimizer_byname(name: str, module: Modules.Module, **kwargs):

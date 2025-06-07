@@ -50,7 +50,6 @@ class SequentialTrainer(Trainer):
         
     def train_on_batch(self, X_batch: ndarray, y_batch: ndarray) -> Tuple[float, ndarray]:
         prediction = self.model.forward(X_batch)
-        
         loss = self.loss.forward(y_batch, prediction)
         
         self.model.backward(self.loss.backward())
@@ -63,6 +62,7 @@ class SequentialTrainer(Trainer):
         return BatchGenerator(length, batch_size, shuffle)
                 
     def get_prediciton(self, inp: ndarray, batch_size: int = 32, verbose: bool = True) -> ndarray:
+        inp = jnp.asarray(inp)
         generator = self.generate_batches(len(inp), batch_size, shuffle = False)
         
         steps = generator.num_steps
@@ -72,7 +72,7 @@ class SequentialTrainer(Trainer):
         
         pbar = generator
         if verbose:
-            pbar = tqdm(pbar, bar_format = "{desc}ETA: {remaining} {bar}", ncols = self.MAX_NCOLS)
+            pbar = tqdm(pbar, bar_format = "{desc}ETA: {remaining} {bar}", ncols = self.MAX_NCOLS, ascii="░▒█")
         
         for step, batch_indices in enumerate(pbar):
             total_predictions.append(self.model.forward(inp[batch_indices], training = False))
@@ -109,10 +109,14 @@ class SequentialTrainer(Trainer):
             history["val_loss"] = []
         
         
+        # convert to jax
+        X = jnp.asarray(X)
+        y = jnp.asarray(y)
+        
         # train
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}:")
-            pbar = tqdm(generator, bar_format = " Train {desc}ETA: {remaining} {bar} ", ncols = self.MAX_NCOLS)
+            pbar = tqdm(generator, bar_format = " Train {desc}ETA: {remaining} {bar} ", ncols = self.MAX_NCOLS, ascii="░▒█")
 
             total_loss = 0
             total_metrics = {k: 0 for k in metrics.keys()}
@@ -158,6 +162,5 @@ class SequentialTrainer(Trainer):
                     history["val_" + k].append(val_metrics[k])
                     
             # callbacks
-            self.optimizer.reset_after_epoch()
                 
         return history

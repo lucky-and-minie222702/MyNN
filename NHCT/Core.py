@@ -1,7 +1,15 @@
 from typing import *
+import pandas as pd
+
+# jax
+import jax
+import jax.numpy as jnp
+from jax import Array as JArray
+from jax import jit, lax
+
+# numpy
 import numpy as np
 from numpy import ndarray
-import pandas as pd
 
 OBJ_COUNT = 0
 EPSILON = 1e-8
