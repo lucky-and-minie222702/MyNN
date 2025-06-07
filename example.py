@@ -5,7 +5,6 @@ from NHCT.NN.Utils import *
 from NHCT import Math
 import sklearn.metrics as met
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 
 print("Jax default:", jax.default_backend(), "devices:", jax.devices())
