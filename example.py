@@ -1,48 +1,71 @@
+# run on this kaggle competition: https://www.kaggle.com/competitions/digit-recognizer/
+# public score: 0.97207
+
+
 import pandas as pd
+
 from NHCT import Core, Math
 from NHCT.NN import *
 from NHCT.NN.Utils import *
-from NHCT import Math
+
 import sklearn.metrics as met
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification
 
-print("Jax default:", jax.default_backend(), "devices:", jax.devices())
+import matplotlib.pyplot as plt
+
+from tqdm import tqdm
+
+np.random.seed(42)
+
+print("Devices:", jax.devices())
 
 model = Modules.SequentialModule([
-    Layers.Dense(128, 32, "relu", dropout = 0.5),
-    Layers.Dense(32, 10, "softmax"),
+    Layers.Dense(784, 128, "relu", dropout = 0.3),
+    Layers.Dense(128, 128, "relu", dropout = 0.5),
+    Layers.Dense(128, 10, "softmax"),
 ])
 model.build()
-print(model.get_layer_opt_names())
 
-X, y = make_classification(n_samples = 200_000,
-                           n_features = 128,
-                           n_informative = 100, 
-                           n_classes = 10, 
-                           random_state = 42)
+
+X = pd.read_csv("test_data/train.csv")
+y = X["label"].to_numpy()
+X = X.drop(columns = "label")
+X = X.to_numpy() / 255.0
 
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = 0.2, random_state = 42)
 
 trainer = SequentialTrainer(
     model = model,
-    optimizer = Optimizers.optimizer_byname("sgd", model, momentum = 0.0),
+    optimizer = Optimizers.optimizer_byname("sgd", model, momentum = 0.2),
     loss = "scce"
 )
 
-hist = trainer.fit(
-    X_train, y_train,
-    epochs = 100,
-    batch_size = 64,
-    metrics = {
-        "accuracy": lambda y_true, y_pred: met.accuracy_score(y_true, np.argmax(y_pred, axis = -1)),
-        "topk=3": lambda y_true, y_pred: met.top_k_accuracy_score(y_true, y_pred, k = 3, labels = np.arange(10)),
-    },
-    val_data = (X_val, y_val),
-)
+epochs = 40
+for ep in range(1, epochs + 1):
+    print(f"Epoch: {ep}/{epochs}")
+    for X_batch, y_batch in tqdm(trainer.generate_batches(X_train, y_train, batch_size = 32), ncols = 60):
+        loss, _ = trainer.train_on_batch(X_batch, y_batch)
+    
+    pred = trainer.get_prediciton(X_val, batch_size = 128)
+    val_loss = trainer.loss.compute_output(y_val, pred)
+    
+    print(f" Val: loss={val_loss:.4f}, accuracy={met.accuracy_score(y_val, np.argmax(pred, axis = -1)):.4f}")
 
-trainer.model.save_pickle("test_weights.pkl")
-trainer.model.load_pickle("test_weights.pkl")
+model.save_pickle("test_weights.pkl")
+model.load_pickle("test_weights.pkl")
+
+X_test = pd.read_csv("test_data/test.csv")
+
+X_test = X_test
+X_test = X_test.to_numpy() / 255.0
+
+test_prediction = trainer.get_prediciton(X_test)
+ans_df = pd.DataFrame({
+    "ImageId": np.arange(1, len(test_prediction) + 1),
+    "Label": np.argmax(test_prediction, axis = -1)
+})
+
+ans_df.to_csv("test_submission.csv", index = False)
 
 prediction = trainer.get_prediciton(X_val)
 # check the model saving

@@ -25,7 +25,7 @@ class Loss(Opt):
     
     def backward(self) -> JArray:
         self.input_grad = self.jit_compute_input_grad(self.target, self.prediction)
-        
+
         assert self.input_grad.shape == self.prediction.shape
         
         return self.input_grad

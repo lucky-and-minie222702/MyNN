@@ -52,16 +52,21 @@ def lecun_init(*shape) -> JArray:
 def sigmoid(x: JArray) -> JArray:
     return 1 / (1 + jnp.exp(-jnp.clip(x, -100, 100)))
 
-def sigmoid_derivative(x: JArray) -> JArray:
-    s = sigmoid(x)
-    return s * (1 - s)
+def sigmoid_derivative(x: JArray, prev_output: JArray | None = None) -> JArray:
+    o = prev_output
+    if prev_output is None:
+        o = sigmoid(x)
+    return o * (1 - o)
 
 # Tanh
 def tanh(x: JArray) -> JArray:
     return jnp.tanh(x)
 
-def tanh_derivative(x: JArray) -> JArray:
-    return 1 - jnp.tanh(x) ** 2
+def tanh_derivative(x: JArray, prev_output: JArray | None = None) -> JArray:
+    o = prev_output
+    if prev_output is None:
+        o = jnp.tanh(x)
+    return 1 - o ** 2
 
 
 # ReLU

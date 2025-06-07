@@ -31,7 +31,7 @@ class SGD(Optimizer):
         self.momentum = momentum
         self.velocities = None
         
-    def reset_after_epoch(self):
+    def zero_velocities(self):
         self.velocities = [[np.zeros(param.shape)
                             for param in params]
                                 for params in self.module.layer_params]

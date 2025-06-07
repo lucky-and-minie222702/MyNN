@@ -1,6 +1,0 @@
-jax==0.4.38
-numpy==2.2.6
-pandas==2.3.0
-scikit_learn==1.7.0
-scipy==1.15.3
-tqdm==4.67.1

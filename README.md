@@ -56,4 +56,4 @@ There is only one available model design with 1-input 1-output sequential struct
 
 ### Note
 
-Documents will be available when i finish all the objects
+Documents will be availabled when i finish all the objects

@@ -71,14 +71,20 @@ class SequentialModule(Module):
         for layer in self.layers:
             assert issubclass(layer.__class__, Layers.Layer), "Layer must be a subclass of Layer"
         
-    def forward(self, inp: JArray, training: bool = True, return_sequences: bool = False) -> JArray:
+    def forward(self, inp: JArray, training: bool = True, return_sequences: bool = False, from_init_ids: List[int] | None = None, from_names: List[str] | None = None) -> JArray:
         self.input = inp
         self.output = inp
         sequences = []
         
         for i, layer in enumerate(self.layers):
             self.output = layer.forward(self.output, training = training)
-            if return_sequences:
+            
+            cond = return_sequences 
+            if from_init_ids is not None:
+                cond = cond and layer.init_id in from_init_ids
+            if from_names is not None:
+                cond = cond and layer.name in from_names
+            if cond:
                 sequences.append(self.output)
         
         if return_sequences:
@@ -136,6 +142,21 @@ class SequentialModule(Module):
             return [(f"{layer.name}_{layer.init_id}", layer.get_opt_names(True)) for layer in self.layers]
         else:
             return [(f"{layer.name}", layer.get_opt_names()) for layer in self.layers]
+        
+    def get_state_dict(self, collect: bool = True):
+        if collect:
+            self.collect_layer_params()
+
+        names = self.get_layer_opt_names()
+        state_dict = {}
+        
+        for i in range(len(self.layer_params)):
+            layer_params = {}
+            for j in range(len(self.layer_params[i])):
+                   layer_params[names[i][1][j]] = self.layer_params[i][j]
+            state_dict[names[i][0]] = layer_params
+            
+        return state_dict
 
     def save_pickle(self, file: str, collect: bool = True):
         if collect:
