@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 # code for: https://www.kaggle.com/competitions/digit-recognizer/
-# result 0.97003 on kaggle
+# result 0.97182 on kaggle
 # all the dataset files are saved in test_data folder
 
 np.random.seed(42)
@@ -32,18 +32,19 @@ X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = 0.2, random_
 
 trainer = SequentialTrainer(
     model = model,
-    optimizer = "sgd",
+    optimizer = Optimizers.optimizer_byname("sgd", model, momentum = 0.3),
     loss = "scce"
 )
 
 hist = trainer.fit(
     X_train, y_train,
-    epochs = 35,
+    epochs = 40,
     batch_size = 32,
     metrics = {
         "accuracy": lambda y_true, y_pred: met.accuracy_score(y_true, np.argmax(y_pred, axis = -1)),
+        "topk=3": lambda y_true, y_pred: met.top_k_accuracy_score(y_true, y_pred, k = 3, labels = np.arange(10)),
     },
-    val_data = (X_val, y_val)
+    val_data = (X_val, y_val),
 )
 
 trainer.model.save_pickle("test_weights.pkl")

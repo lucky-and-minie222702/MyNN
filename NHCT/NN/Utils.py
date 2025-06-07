@@ -156,5 +156,8 @@ class SequentialTrainer(Trainer):
                 history["val_loss"].append(val_loss)
                 for k in metrics.keys():
                     history["val_" + k].append(val_metrics[k])
+                    
+            # callbacks + zero grad
+            self.optimizer.zero_grad()
                 
         return history

@@ -4,32 +4,36 @@ from . import Functional as F
 
 
 class Initializer(NamedObj):
-    pass
+    def __init__(self, name: str = ""):
+        super().__init__(name)
+        
+    def init_param(self, *shape) -> ndarray:
+        raise NotImplementedError()
+    
+    def __call__(self, *shape):
+        return self.init_param(*shape)
 
 class He(Initializer):
     def __init__(self):
         super().__init__("he")
-        pass
 
-    def __call__(self, *shape):
+    def init_param(self, *shape) -> ndarray:
         return F.he_init(*shape)
 
     
 class Xavier(Initializer):
     def __init__(self):
         super().__init__("xavier")
-        pass
 
-    def __call__(self, *shape):
+    def init_param(self, *shape) -> ndarray:
         return F.xavier_init(*shape)
     
 
 class LeCun(Initializer):
     def __init__(self):
         super().__init__("lecun")
-        pass
 
-    def __call__(self, *shape):
+    def init_param(self, *shape) -> ndarray:
         return F.lecun_init(*shape)
 
 
@@ -39,7 +43,7 @@ class Normal(Initializer):
         self.mean = mean
         self.std = std
 
-    def __call__(self, *shape):
+    def init_param(self, *shape) -> ndarray:
         return F.normal_init(*shape, mean = self.mean, std = self.std)
     
 
@@ -49,7 +53,7 @@ class Uniform(Initializer):
         self.low = low
         self.high = high
 
-    def __call__(self, *shape):
+    def init_param(self, *shape) -> ndarray:
         return F.uniform_init(*shape, low = self.low, high = self.high)
     
 

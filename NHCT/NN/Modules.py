@@ -17,25 +17,25 @@ class Module(NamedObj):
         self.output_grad = None
     
     def forward(self, inp: ndarray, training: bool = True) -> ndarray:
-        pass
+        raise NotImplementedError()
     
     def backward(self, output_grad: ndarray) -> ndarray:
-        pass
+        raise NotImplementedError()
 
     def collect_layer_param_grads(self):
-        pass
-            
+        raise NotImplementedError()
+        
     def get_layer_param_grads(self) -> List[List[ndarray]]:
-        pass
+        raise NotImplementedError()
         
     def collect_layer_params(self):
-        pass
+        raise NotImplementedError()
             
     def get_layer_params(self) -> List[List[ndarray]]:
-        pass
+        raise NotImplementedError()
         
     def get_layer_names(self) -> List[str]:
-        pass
+        raise NotImplementedError()
 
 
 class SequentialModule(Module):
@@ -140,10 +140,4 @@ class SequentialModule(Module):
     
 class DynamicModule(Module):
     def __init__(self):
-        pass
-    
-    def forward(self):
-        pass
-    
-    def backward(self):
         pass
