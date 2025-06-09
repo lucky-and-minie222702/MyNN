@@ -1,6 +1,6 @@
 # NHCT - A simple <small><small><i>kind of</i></small></small></small> deep learning framework
 
-Huge respect to NHCT who always support me <br>
+Huge respect to NHCT who always supports me <br>
 This framework is inspired on both Pytorch and Keras syntax and idea <br>
 This framework is based on Jax
 
